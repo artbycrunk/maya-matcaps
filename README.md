@@ -1,6 +1,6 @@
 # Maya Matcaps
 
-A Tool for utilizing matcaps in maya
+A Tool for utilizing matcaps in maya via projection
 
 Forked from the awesome work from kanishk
 https://gist.github.com/kanishk2391/55a9e60b5fe351b65bc48c1016d9331f
@@ -9,13 +9,15 @@ https://gist.github.com/kanishk2391/55a9e60b5fe351b65bc48c1016d9331f
 
 ## Run Using
 ```
-matcap = MatcapBroswer()
+import matcapsMaya as matcaps
+
+matcap = matcaps.MatcapBrowser()
 matcap.show()
 ```
 
 ## Requirements
 
-Autodesk Maya tested using Maya 2016 Windows and Linux but should work with all versions.
+Autodesk Maya 2022 and up, tested on Windows 10.
 
 ## Issues, feature requests, and contributions
 

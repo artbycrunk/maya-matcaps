@@ -2,11 +2,36 @@ import os
 import maya.cmds as cmds
 import glob
 
+def load_path_from_file():
+    script_path = os.path.dirname(os.path.abspath(__file__))
+    try:
+        with open('{0}/__matcaps_previous_dir__.txt'.format(script_path), 'r') as f:
+            path = f.readlines()[0]
+            if(os.path.isdir(path)):
+                return path
+        return ""
+    except:
+        print("No previous paths found")
+        return ""
+        
+        
+def write_path_to_file(path):
+    script_path = os.path.dirname(os.path.abspath(__file__))
+    try:
+        with open('{0}/__matcaps_previous_dir__.txt'.format(script_path), 'w') as f:
+            f.write(path)
+    except:
+        raise IOError("Unable to write to file {0}/__matcaps_previous_dir__.txt".format(script_path))
 
-class MapcapShader(object):
+
+class MatcapShader():
+    
+    
     def __init__(self, verbose=False):
         self.verbose = verbose
         self.shader, self.filenode = self.create()
+        
+
 
     def create_node(self, nodetype, name):
         if nodetype in ["surfaceShader"]:
@@ -17,11 +42,13 @@ class MapcapShader(object):
             return cmds.shadingNode(nodetype, n=name, asUtility=True)
         return False
 
+
     def connect_attr(self, conn):
         if self.verbose:
-            print conn
+            print(conn)
         cmds.connectAttr("%s.%s" % (conn[0], conn[2]),
                          "%s.%s" % (conn[1], conn[3]), force=True)
+
 
     def create(self):
         shader = self.create_node("surfaceShader", "matCapShader")
@@ -54,9 +81,11 @@ class MapcapShader(object):
         cmds.setAttr("%s.eyeSpace" % envball, 1)
         return shader, filenode
 
+
     def set_texture(self, imagename):
         cmds.setAttr("%s.fileTextureName" % self.filenode,
                      str(imagename), type="string")
+
 
     def assign(self):
         meshes = cmds.ls(sl=True)
@@ -64,60 +93,61 @@ class MapcapShader(object):
             cmds.hyperShade(a=self.shader)
 
 
-class MatcapBroswer(object):
+class MatcapBrowser():
+    
     def __init__(self, verbose=False):
         self.verbose = verbose
-        self.window = None
-        self.shader = MapcapShader(verbose=self.verbose)
-        self.inputpath = None
+        self.window_name = "MatcapsForMaya"
+        self.shader = MatcapShader(verbose=self.verbose)
+        self.inputpath_textFieldButtonGrp = None
         self.matcap_textScrollList = None
         self.matcap_iconTextButton = None
+        self.path = load_path_from_file()
 
-    def getpath(self):
-        return cmds.textField(self.inputpath, q=True, text=True)
-
-    def fetch_files(self):
-        path = self.getpath()
-
-        if not path:
-            print "Please select a path to browse matcaps"
-            return False
-
-        files = [os.path.basename(x)
-                 for x in glob.glob(os.path.join(path, "*.*"))]
-        cmds.textScrollList(self.matcap_textScrollList,
-                            e=True, append=files)
-
+        
     def change_preview(self):
-        path = self.getpath()
         selectedIndex = cmds.textScrollList(
             self.matcap_textScrollList, q=True, si=1)
         if selectedIndex:
-            fullpath = os.path.join(path, selectedIndex[0])
+            fullpath = os.path.join(self.path, selectedIndex[0])
             self.shader.set_texture(fullpath)
             cmds.iconTextButton(self.matcap_iconTextButton,
-                                e=True, image1=fullpath)
+                                e=True, image1=fullpath)        
+        
+    
+    def write_icon_list(self, path):
+        files = [os.path.basename(x) for x in glob.glob(
+                os.path.join(path, "*.*")
+                )]
+        cmds.textScrollList(self.matcap_textScrollList,
+                                e=True, append=files)
+        return files
+    
+    
+    def launch_filedialog(self):
+        path = cmds.fileDialog2(fm=3)[0]
+        if(path):
+            self.write_icon_list(path)
+            cmds.textFieldButtonGrp(self.inputpath_textFieldButtonGrp, e=True, text=path)
+            self.path = path
+            write_path_to_file(path)
+            
 
     def show(self):
-        if not self.window:
-            self.build()
-        cmds.showWindow(self.window)
-
-    def build(self):
-        self.window = cmds.window(title="Matcaps for Maya",
-                                  iconName='Short Name',
-                                  widthHeight=(505, 315),
-                                  tlb=True, sizeable=False,
-                                  bgc=(0.3, 0.3, 0.3))
+        if(cmds.window(self.window_name, q=True, ex=True)):
+            cmds.delete(self.window_name)
+            
+        window = cmds.window(title="Matcaps for Maya",
+                             iconName='Short Name',
+                             widthHeight=(505, 315),
+                             tlb=True, sizeable=False,
+                             bgc=(0.3, 0.3, 0.3))
 
         cmds.columnLayout(adjustableColumn=True)
-        cmds.iconTextStaticLabel(st='textOnly', l='MATCAPS FOR MAYA', h=30)
+        cmds.text(l='MATCAPS FOR MAYA', h=30)
         cmds.separator(h=10)
-        cmds.rowColumnLayout(nc=3)
-        cmds.iconTextStaticLabel(st='textOnly', l='Path', w=50)
-        self.inputpath = cmds.textField(w=350, bgc=(0.5, 0.5, 0.5))
-        cmds.button("Fetch Matcaps", w=100, c=lambda x: self.fetch_files())
-        cmds.setParent("..")
+        self.inputpath_textFieldButtonGrp = cmds.textFieldButtonGrp(l='Path', bl='...', text=self.path,
+                                                                    bc=lambda: self.launch_filedialog())
         cmds.separator(h=10)
         cmds.rowColumnLayout(nc=2)
 
@@ -128,3 +158,8 @@ class MatcapBroswer(object):
         cmds.setParent('..')
         cmds.separator(h=10)
         cmds.button("Assign Shader", w=250, c=lambda x: self.shader.assign())
+        
+        if(self.path !=""):
+            self.write_icon_list(self.path)
+            
+        cmds.showWindow(window)
