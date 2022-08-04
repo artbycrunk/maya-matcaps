@@ -7,13 +7,22 @@ https://gist.github.com/kanishk2391/55a9e60b5fe351b65bc48c1016d9331f
 
 ![Matcaps for maya](./images/main.png "Matcaps for maya")
 
+
+## Install
+
+move matcapsMaya.py into document/maya/{version}/scripts/ 
+and restart your maya session.
+
+
 ## Run Using
+
 ```
 import matcapsMaya as matcaps
 
 matcap = matcaps.MatcapBrowser()
 matcap.show()
 ```
+
 
 ## Requirements
 
