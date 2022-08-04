@@ -134,10 +134,11 @@ class MatcapBrowser():
             
 
     def show(self):
-        if(cmds.window(self.window_name, q=True, ex=True)):
-            cmds.delete(self.window_name)
+        if(cmds.window(self.window_name, ex=True)):
+            cmds.deleteUI(self.window_name)
             
-        window = cmds.window(title="Matcaps for Maya",
+        window = cmds.window(self.window_name,
+                             title="Matcaps for Maya",
                              iconName='Short Name',
                              widthHeight=(505, 315),
                              tlb=True, sizeable=False,
