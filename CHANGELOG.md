@@ -9,7 +9,7 @@ Initial Release
 
 ### Added
 
-- Now stores the previously selected path between maya sessions in a file "\__matcaps_previous_dir__.txt" stored in the install directory
+- Now stores the previously selected path between maya sessions in a file "\_\_matcaps_previous_dir__.txt" stored in the install directory
 
 ### Changed
 
